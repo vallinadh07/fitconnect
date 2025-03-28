@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, BarChart2, Dumbbell, Users, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';

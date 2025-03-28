@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
