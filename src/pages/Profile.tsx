@@ -1,15 +1,25 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import PageLayout from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { LogOut, User, Mail, UserCircle } from 'lucide-react';
+import { LogOut, User as UserIcon, Mail, UserCircle, Target, Activity, Utensils, Scale, Ruler } from 'lucide-react';
+import { UserGoal, ActivityLevel, DietPreference } from '@/types/user';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import ProfileFitnessGoals from '@/components/profile/ProfileFitnessGoals';
+import ProfileSettings from '@/components/profile/ProfileSettings';
+import ProfileStats from '@/components/profile/ProfileStats';
 
 const Profile = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, updateProfile, updateFitnessGoals } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
   
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
@@ -19,14 +29,14 @@ const Profile = () => {
     logout();
     toast.success("Logged out successfully");
   };
-  
+
   return (
     <PageLayout>
-      <div className="container max-w-4xl py-6 space-y-8">
+      <div className="container max-w-6xl py-6 space-y-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Your Profile</h1>
           <p className="text-muted-foreground mt-2">
-            Manage your account settings and preferences
+            Manage your account settings and fitness preferences
           </p>
         </div>
         
@@ -43,6 +53,25 @@ const Profile = () => {
               <CardTitle>{user?.name}</CardTitle>
               <CardDescription>{user?.email}</CardDescription>
             </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Followers</span>
+                  <span className="font-bold">{user?.social?.followers || 0}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Following</span>
+                  <span className="font-bold">{user?.social?.following || 0}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Weekly Goal</span>
+                  <div className="flex-1 mx-2">
+                    <Progress value={(user?.fitness?.weeklyWorkoutTarget ? 2 / user?.fitness?.weeklyWorkoutTarget * 100 : 0)} className="h-2" />
+                  </div>
+                  <span className="text-xs">2/{user?.fitness?.weeklyWorkoutTarget || 0}</span>
+                </div>
+              </div>
+            </CardContent>
             <CardFooter>
               <Button variant="destructive" className="w-full" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -51,58 +80,26 @@ const Profile = () => {
             </CardFooter>
           </Card>
           
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Information</CardTitle>
-                <CardDescription>Your personal information and settings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center">
-                  <User className="mr-2 h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <div className="text-sm font-medium">Name</div>
-                    <div>{user?.name}</div>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="mr-2 h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <div className="text-sm font-medium">Email</div>
-                    <div>{user?.email}</div>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <UserCircle className="mr-2 h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <div className="text-sm font-medium">Account ID</div>
-                    <div className="text-sm text-muted-foreground">{user?.id}</div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  Edit Profile
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Security</CardTitle>
-                <CardDescription>Manage your password and account security</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">
-                  Your password was last changed on May 12, 2023
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  Change Password
-                </Button>
-              </CardFooter>
-            </Card>
+          <div>
+            <Tabs defaultValue="goals" className="w-full">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="goals">Fitness Goals</TabsTrigger>
+                <TabsTrigger value="stats">Stats & Progress</TabsTrigger>
+                <TabsTrigger value="settings">Account Settings</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="goals">
+                <ProfileFitnessGoals />
+              </TabsContent>
+              
+              <TabsContent value="stats">
+                <ProfileStats />
+              </TabsContent>
+              
+              <TabsContent value="settings">
+                <ProfileSettings />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +16,8 @@ import Planner from "./pages/Planner";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import { initializeWorkoutLogs } from "./services/workoutService";
+import { initializeNutritionLogs } from "./services/nutritionService";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,36 +28,44 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <BrowserRouter>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/workouts" element={<Workouts />} />
-                <Route path="/progress" element={<Progress />} />
-                <Route path="/community" element={<Community />} />
-                <Route path="/planner" element={<Planner />} />
-                <Route path="/profile" element={<Profile />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+const App = () => {
+  useEffect(() => {
+    // Initialize sample data
+    initializeWorkoutLogs();
+    initializeNutritionLogs();
+  }, []);
+
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<Login />} />
+                
+                {/* Protected routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/workouts" element={<Workouts />} />
+                  <Route path="/progress" element={<Progress />} />
+                  <Route path="/community" element={<Community />} />
+                  <Route path="/planner" element={<Planner />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+        {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 export default App;

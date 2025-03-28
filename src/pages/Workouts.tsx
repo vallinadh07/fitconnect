@@ -1,8 +1,14 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageLayout from '@/components/layout/PageLayout';
 import WorkoutCard from '@/components/workouts/WorkoutCard';
+import WorkoutLogCard from '@/components/workouts/WorkoutLogCard';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { WorkoutType } from '@/types/workout';
+import { getWorkoutLogs, initializeWorkoutLogs } from '@/services/workoutService';
+import { WorkoutDialog } from '@/components/workouts/WorkoutDialog';
 
 const workoutCategories = [
   'All',
@@ -71,50 +77,169 @@ const workouts = [
 ];
 
 const Workouts = () => {
+  const [selectedTab, setSelectedTab] = useState("All");
+  const [showDialog, setShowDialog] = useState(false);
+  const [workoutLogs, setWorkoutLogs] = useState([]);
+  const [activeSection, setActiveSection] = useState<'discover' | 'logs'>('discover');
+
+  useEffect(() => {
+    initializeWorkoutLogs();
+    refreshWorkoutLogs();
+  }, []);
+
+  const refreshWorkoutLogs = () => {
+    setWorkoutLogs(getWorkoutLogs());
+  };
+
+  const handleLogSaved = () => {
+    refreshWorkoutLogs();
+    setShowDialog(false);
+  };
+
   return (
     <PageLayout>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Workouts</h1>
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-3xl font-bold tracking-tight">Workouts</h1>
+          <Button onClick={() => setShowDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Log Workout
+          </Button>
+        </div>
         <p className="text-muted-foreground">
-          Discover and start new workouts
+          Discover workouts and track your progress
         </p>
       </div>
       
-      <Tabs defaultValue="All">
-        <div className="border-b mb-6">
-          <TabsList className="h-auto p-0 bg-transparent">
-            {workoutCategories.map((category) => (
-              <TabsTrigger 
-                key={category}
-                value={category}
-                className="py-3 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none"
-              >
-                {category}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <div className="mb-6">
+        <div className="border-b">
+          <div className="flex">
+            <button
+              className={`px-4 py-2 ${activeSection === 'discover' ? 'border-b-2 border-primary font-medium' : 'text-muted-foreground'}`}
+              onClick={() => setActiveSection('discover')}
+            >
+              Discover Workouts
+            </button>
+            <button
+              className={`px-4 py-2 ${activeSection === 'logs' ? 'border-b-2 border-primary font-medium' : 'text-muted-foreground'}`}
+              onClick={() => setActiveSection('logs')}
+            >
+              My Workout Logs
+            </button>
+          </div>
         </div>
-        
-        {workoutCategories.map((category) => (
-          <TabsContent key={category} value={category} className="m-0">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {workouts
-                .filter((workout) => category === 'All' || workout.category === category)
-                .map((workout) => (
-                  <WorkoutCard
-                    key={workout.id}
-                    title={workout.title}
-                    category={workout.category}
-                    duration={workout.duration}
-                    level={workout.level}
-                    calories={workout.calories}
-                    image={workout.image}
-                  />
-                ))}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+      </div>
+      
+      {activeSection === 'discover' ? (
+        <Tabs defaultValue="All" value={selectedTab} onValueChange={setSelectedTab}>
+          <div className="border-b mb-6">
+            <TabsList className="h-auto p-0 bg-transparent">
+              {workoutCategories.map((category) => (
+                <TabsTrigger 
+                  key={category}
+                  value={category}
+                  className="py-3 px-4 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none"
+                >
+                  {category}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          
+          {workoutCategories.map((category) => (
+            <TabsContent key={category} value={category} className="m-0">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {workouts
+                  .filter((workout) => category === 'All' || workout.category === category)
+                  .map((workout) => (
+                    <WorkoutCard
+                      key={workout.id}
+                      title={workout.title}
+                      category={workout.category}
+                      duration={workout.duration}
+                      level={workout.level}
+                      calories={workout.calories}
+                      image={workout.image}
+                    />
+                  ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      ) : (
+        <div className="space-y-6">
+          <Tabs defaultValue="All">
+            <TabsList>
+              <TabsTrigger value="All">All</TabsTrigger>
+              <TabsTrigger value="Strength">Strength</TabsTrigger>
+              <TabsTrigger value="Cardio">Cardio</TabsTrigger>
+              <TabsTrigger value="HIIT">HIIT</TabsTrigger>
+              <TabsTrigger value="Yoga">Yoga</TabsTrigger>
+              <TabsTrigger value="Flexibility">Flexibility</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="All" className="mt-6">
+              <div className="grid grid-cols-1 gap-4">
+                {workoutLogs.length > 0 ? (
+                  workoutLogs.map((log) => (
+                    <WorkoutLogCard 
+                      key={log.id} 
+                      workout={log} 
+                      onRefresh={refreshWorkoutLogs}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center p-8 border rounded-lg">
+                    <p className="text-muted-foreground">You haven't logged any workouts yet.</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setShowDialog(true)}
+                    >
+                      Log Your First Workout
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            {['Strength', 'Cardio', 'HIIT', 'Yoga', 'Flexibility'].map((type) => (
+              <TabsContent key={type} value={type} className="mt-6">
+                <div className="grid grid-cols-1 gap-4">
+                  {workoutLogs.filter(log => log.type.toLowerCase() === type.toLowerCase()).length > 0 ? (
+                    workoutLogs
+                      .filter(log => log.type.toLowerCase() === type.toLowerCase())
+                      .map((log) => (
+                        <WorkoutLogCard 
+                          key={log.id} 
+                          workout={log} 
+                          onRefresh={refreshWorkoutLogs}
+                        />
+                      ))
+                  ) : (
+                    <div className="text-center p-8 border rounded-lg">
+                      <p className="text-muted-foreground">No {type} workouts logged yet.</p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={() => setShowDialog(true)}
+                      >
+                        Log a {type} Workout
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      )}
+      
+      <WorkoutDialog 
+        open={showDialog} 
+        onOpenChange={setShowDialog}
+        onSave={handleLogSaved}
+      />
     </PageLayout>
   );
 };

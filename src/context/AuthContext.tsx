@@ -1,12 +1,6 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
-
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-};
+import { User, UserGoal, ActivityLevel, DietPreference } from '@/types/user';
 
 type AuthContextType = {
   user: User | null;
@@ -14,6 +8,8 @@ type AuthContextType = {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateProfile: (profileData: Partial<User>) => void;
+  updateFitnessGoals: (fitnessData: Partial<User['fitness']>) => void;
 };
 
 const defaultContext: AuthContextType = {
@@ -22,6 +18,8 @@ const defaultContext: AuthContextType = {
   isLoading: true,
   login: async () => false,
   logout: () => {},
+  updateProfile: () => {},
+  updateFitnessGoals: () => {},
 };
 
 const AuthContext = createContext<AuthContextType>(defaultContext);
@@ -60,6 +58,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       name: email.split('@')[0],
       email,
       avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + email,
+      fitness: {
+        goal: 'general_fitness',
+        activityLevel: 'intermediate',
+        dietPreference: 'no_preference',
+        weeklyWorkoutTarget: 3,
+      },
+      social: {
+        following: 12,
+        followers: 8,
+      }
     };
     
     // Store user in localStorage
@@ -73,6 +81,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const updateProfile = (profileData: Partial<User>) => {
+    if (!user) return;
+    
+    const updatedUser = { ...user, ...profileData };
+    localStorage.setItem('activeCircleUser', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
+  const updateFitnessGoals = (fitnessData: Partial<User['fitness']>) => {
+    if (!user) return;
+    
+    const updatedUser = { 
+      ...user, 
+      fitness: { 
+        ...user.fitness, 
+        ...fitnessData 
+      }
+    };
+    
+    localStorage.setItem('activeCircleUser', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -81,6 +112,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         logout,
+        updateProfile,
+        updateFitnessGoals,
       }}
     >
       {children}
